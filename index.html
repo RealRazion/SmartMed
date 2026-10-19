@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#090d16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>SmartMed — Täglicher Medikamenten-Tracker</title>
+  <style>
+    /* ----------------------------------------------------
+       Design System & CSS Reset (OLED / Slate Dark Mode)
+    ---------------------------------------------------- */
+    :root {
+      --bg-app: #090d16;
+      --bg-card: #131a29;
+      --bg-card-done: #0f2223;
+      --border-card: rgba(255, 255, 255, 0.07);
+      --border-done: rgba(52, 211, 153, 0.25);
+      
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --accent-morning: #fbbf24;
+      --accent-evening: #818cf8;
+      
+      --brand-emerald: #10b981;
+      --brand-emerald-dim: rgba(16, 185, 129, 0.14);
+      --brand-emerald-border: rgba(16, 185, 129, 0.35);
+      --brand-emerald-text: #34d399;
+
+      --btn-primary-bg: #1e293b;
+      --btn-primary-border: rgba(255, 255, 255, 0.12);
+      --btn-primary-hover: #27354a;
+      
+      --radius-xl: 20px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-full: 9999px;
+      
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px 40px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ----------------------------------------------------
+       Header
+    ---------------------------------------------------- */
+    header {
+      padding: 8px 4px 6px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .brand-icon {
+      width: 22px;
+      height: 22px;
+      color: var(--brand-emerald);
+    }
+
+    .live-time {
+      font-size: 0.85rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .date-display {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .weekday {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .full-date {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* ----------------------------------------------------
+       Daily Tracker Cards
+    ---------------------------------------------------- */
+    .cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tracker-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+    }
+
+    .tracker-card.is-done {
+      background: var(--bg-card-done);
+      border-color: var(--border-done);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .time-slot {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slot-icon-wrapper {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.04);
+      flex-shrink: 0;
+      transition: background 0.2s ease;
+    }
+
+    .morning .slot-icon-wrapper {
+      color: var(--accent-morning);
+    }
+
+    .evening .slot-icon-wrapper {
+      color: var(--accent-evening);
+    }
+
+    .tracker-card.is-done .slot-icon-wrapper {
+      background: var(--brand-emerald-dim);
+      color: var(--brand-emerald-text);
+    }
+
+    .slot-info h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .slot-info p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .tracker-card.is-done .status-badge {
+      background: var(--brand-emerald-dim);
+      color: var(--brand-emerald-text);
+      border-color: var(--brand-emerald-border);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.2s;
+    }
+
+    .tracker-card.is-done .status-dot {
+      background: var(--brand-emerald-text);
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+    }
+
+    /* Action Trigger */
+    .action-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .take-button {
+      width: 100%;
+      min-height: 56px;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      border: 1px solid var(--btn-primary-border);
+      background: var(--btn-primary-bg);
+      color: var(--text-primary);
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      touch-action: manipulation;
+    }
+
+    .take-button:hover {
+      background: var(--btn-primary-hover);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .take-button:active {
+      transform: scale(0.98);
+    }
+
+    /* Completed Button State */
+    .tracker-card.is-done .take-button {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: var(--brand-emerald-border);
+      color: var(--brand-emerald-text);
+      cursor: default;
+    }
+
+    .btn-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Undo link / button */
+    .undo-btn {
+      align-self: center;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-family: inherit;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s ease;
+    }
+
+    .undo-btn:hover {
+      color: var(--text-secondary);
+      text-decoration: underline;
+    }
+
+    .undo-btn:active {
+      transform: scale(0.96);
+    }
+
+    .tracker-card.is-done .undo-btn {
+      display: inline-flex;
+    }
+
+    /* ----------------------------------------------------
+       History Section (Historie der letzten Tage)
+    ---------------------------------------------------- */
+    .history-section {
+      margin-top: 10px;
+      background: #0f1522;
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .history-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-badge {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .history-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+    }
+
+    .history-date {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .history-date.is-yesterday {
+      color: var(--text-primary);
+    }
+
+    .history-statuses {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .history-slot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .history-indicator {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #334155;
+    }
+
+    .history-indicator.checked {
+      background: var(--brand-emerald);
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    }
+
+    /* ----------------------------------------------------
+       Footer / Note
+    ---------------------------------------------------- */
+    footer {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Header -->
+    <header>
+      <div class="brand-row">
+        <div class="brand">
+          <!-- Minimalist Pill / Medical Cross SVG -->
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path>
+            <path d="m8.5 8.5 7 7"></path>
+          </svg>
+          <span>SmartMed</span>
+        </div>
+        <div class="live-time" id="liveClock">--:--</div>
+      </div>
+
+      <div class="date-display">
+        <div class="weekday" id="currentWeekday">Heute</div>
+        <div class="full-date" id="currentFullDate">Lade Datum...</div>
+      </div>
+    </header>
+
+    <!-- Main Day Cards -->
+    <main class="cards-container">
+      
+      <!-- Morgens Card -->
+      <section class="tracker-card morning" id="cardMorning">
+        <div class="card-top">
+          <div class="time-slot">
+            <div class="slot-icon-wrapper" aria-hidden="true">
+              <!-- Sun Icon -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+              </svg>
+            </div>
+            <div class="slot-info">
+              <h2>Morgens</h2>
+              <p>Vor oder zum Frühstück</p>
+            </div>
+          </div>
+
+          <div class="status-badge" id="badgeMorning">
+            <span class="status-dot"></span>
+            <span class="badge-text" id="badgeTextMorning">Offen</span>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="take-button" id="btnMorning" type="button" aria-label="Morgendliche Medikamente als genommen markieren">
+            <span class="btn-icon" id="btnIconMorning">
+              <!-- Circle / Unchecked Icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+              </svg>
+            </span>
+            <span class="btn-text" id="btnTextMorning">Als gegeben markieren</span>
+          </button>
+
+          <button class="undo-btn" id="undoMorning" type="button" aria-label="Morgendliche Einnahme rückgängig machen">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span>Rückgängig</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Abends Card -->
+      <section class="tracker-card evening" id="cardEvening">
+        <div class="card-top">
+          <div class="time-slot">
+            <div class="slot-icon-wrapper" aria-hidden="true">
+              <!-- Moon Icon -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+              </svg>
+            </div>
+            <div class="slot-info">
+              <h2>Abends</h2>
+              <p>Zum Abendessen / vor dem Schlafen</p>
+            </div>
+          </div>
+
+          <div class="status-badge" id="badgeEvening">
+            <span class="status-dot"></span>
+            <span class="badge-text" id="badgeTextEvening">Offen</span>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="take-button" id="btnEvening" type="button" aria-label="Abendliche Medikamente als genommen markieren">
+            <span class="btn-icon" id="btnIconEvening">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+              </svg>
+            </span>
+            <span class="btn-text" id="btnTextEvening">Als gegeben markieren</span>
+          </button>
+
+          <button class="undo-btn" id="undoEvening" type="button" aria-label="Abendliche Einnahme rückgängig machen">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span>Rückgängig</span>
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- History Section (Letzte 4 Tage) -->
+    <section class="history-section" aria-labelledby="historyHeading">
+      <div class="history-header">
+        <span class="history-title" id="historyHeading">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 2v4"></path>
+            <path d="M16 2v4"></path>
+            <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+            <path d="M3 10h18"></path>
+          </svg>
+          Verlauf
+        </span>
+        <span class="history-badge">Letzte 4 Tage</span>
+      </div>
+
+      <ul class="history-list" id="historyList">
+        <!-- Rendered by JavaScript -->
+      </ul>
+    </section>
+
+    <footer>
+      SmartMed • Automatische Speicherung &amp; Tageswechsel
+    </footer>
+
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      const STORAGE_KEY = 'smartmed_records_v1';
+
+      // SVG Templates
+      const SVG_CHECK = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>`;
+      const SVG_CIRCLE = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle></svg>`;
+
+      // State Management
+      function loadAllRecords() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch (e) {
+          console.error('Fehler beim Laden aus localStorage:', e);
+          return {};
+        }
+      }
+
+      function saveAllRecords(records) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        } catch (e) {
+          console.error('Fehler beim Speichern in localStorage:', e);
+        }
+      }
+
+      function getLocalDateKey(dateObj) {
+        const d = dateObj || new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      function getTodayRecord() {
+        const records = loadAllRecords();
+        const todayKey = getLocalDateKey();
+        if (!records[todayKey]) {
+          records[todayKey] = {
+            morning: { taken: false, time: null },
+            evening: { taken: false, time: null }
+          };
+          saveAllRecords(records);
+        }
+        return records[todayKey];
+      }
+
+      function updateSlotStatus(slot, taken) {
+        const records = loadAllRecords();
+        const todayKey = getLocalDateKey();
+
+        if (!records[todayKey]) {
+          records[todayKey] = {
+            morning: { taken: false, time: null },
+            evening: { taken: false, time: null }
+          };
+        }
+
+        if (taken) {
+          const now = new Date();
+          const hours = String(now.getHours()).padStart(2, '0');
+          const mins = String(now.getMinutes()).padStart(2, '0');
+          records[todayKey][slot] = {
+            taken: true,
+            time: `${hours}:${mins}`
+          };
+        } else {
+          records[todayKey][slot] = {
+            taken: false,
+            time: null
+          };
+        }
+
+        saveAllRecords(records);
+        renderToday();
+        renderHistory();
+      }
+
+      // DOM Elements
+      const currentWeekdayEl = document.getElementById('currentWeekday');
+      const currentFullDateEl = document.getElementById('currentFullDate');
+      const liveClockEl = document.getElementById('liveClock');
+
+      const cardMorning = document.getElementById('cardMorning');
+      const badgeTextMorning = document.getElementById('badgeTextMorning');
+      const btnMorning = document.getElementById('btnMorning');
+      const btnIconMorning = document.getElementById('btnIconMorning');
+      const btnTextMorning = document.getElementById('btnTextMorning');
+      const undoMorning = document.getElementById('undoMorning');
+
+      const cardEvening = document.getElementById('cardEvening');
+      const badgeTextEvening = document.getElementById('badgeTextEvening');
+      const btnEvening = document.getElementById('btnEvening');
+      const btnIconEvening = document.getElementById('btnIconEvening');
+      const btnTextEvening = document.getElementById('btnTextEvening');
+      const undoEvening = document.getElementById('undoEvening');
+
+      const historyListEl = document.getElementById('historyList');
+
+      // Header updates (Date & Clock)
+      function updateHeader() {
+        const now = new Date();
+
+        // German Weekday
+        const weekdayOptions = { weekday: 'long' };
+        const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+
+        const weekdayStr = now.toLocaleDateString('de-DE', weekdayOptions);
+        const fullDateStr = now.toLocaleDateString('de-DE', dateOptions);
+
+        currentWeekdayEl.textContent = weekdayStr;
+        currentFullDateEl.textContent = fullDateStr;
+
+        const hours = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        liveClockEl.textContent = `${hours}:${mins}`;
+      }
+
+      // Render Cards for Today
+      function renderSlot(slot, cardEl, badgeTextEl, btnEl, btnIconEl, btnTextEl, slotData) {
+        if (slotData && slotData.taken) {
+          cardEl.classList.add('is-done');
+          badgeTextEl.textContent = `Erledigt um ${slotData.time} Uhr`;
+          btnIconEl.innerHTML = SVG_CHECK;
+          btnTextEl.textContent = '✓ Als erledigt markiert';
+          btnEl.disabled = true;
+        } else {
+          cardEl.classList.remove('is-done');
+          badgeTextEl.textContent = 'Offen';
+          btnIconEl.innerHTML = SVG_CIRCLE;
+          btnTextEl.textContent = 'Als gegeben markieren';
+          btnEl.disabled = false;
+        }
+      }
+
+      function renderToday() {
+        const todayData = getTodayRecord();
+        renderSlot('morning', cardMorning, badgeTextMorning, btnMorning, btnIconMorning, btnTextMorning, todayData.morning);
+        renderSlot('evening', cardEvening, badgeTextEvening, btnEvening, btnIconEvening, btnTextEvening, todayData.evening);
+      }
+
+      // Render History (past 4 days)
+      function renderHistory() {
+        const records = loadAllRecords();
+        historyListEl.innerHTML = '';
+
+        for (let i = 1; i <= 4; i++) {
+          const pastDate = new Date();
+          pastDate.setDate(pastDate.getDate() - i);
+          const dateKey = getLocalDateKey(pastDate);
+          const dayRecord = records[dateKey];
+
+          const isYesterday = i === 1;
+          const dayName = isYesterday 
+            ? 'Gestern' 
+            : pastDate.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+
+          const morningTaken = dayRecord && dayRecord.morning && dayRecord.morning.taken;
+          const eveningTaken = dayRecord && dayRecord.evening && dayRecord.evening.taken;
+
+          const morningTime = (dayRecord && dayRecord.morning && dayRecord.morning.time) ? dayRecord.morning.time : '';
+          const eveningTime = (dayRecord && dayRecord.evening && dayRecord.evening.time) ? dayRecord.evening.time : '';
+
+          const li = document.createElement('li');
+          li.className = 'history-item';
+          li.innerHTML = `
+            <span class="history-date ${isYesterday ? 'is-yesterday' : ''}">${dayName}</span>
+            <div class="history-statuses">
+              <span class="history-slot" title="Morgens: ${morningTaken ? 'Erledigt (' + morningTime + ')' : 'Nicht erfasst'}">
+                <span>☀️</span>
+                <span class="history-indicator ${morningTaken ? 'checked' : ''}"></span>
+              </span>
+              <span class="history-slot" title="Abends: ${eveningTaken ? 'Erledigt (' + eveningTime + ')' : 'Nicht erfasst'}">
+                <span>🌙</span>
+                <span class="history-indicator ${eveningTaken ? 'checked' : ''}"></span>
+              </span>
+            </div>
+          `;
+          historyListEl.appendChild(li);
+        }
+      }
+
+      // Event Listeners
+      btnMorning.addEventListener('click', () => updateSlotStatus('morning', true));
+      undoMorning.addEventListener('click', () => updateSlotStatus('morning', false));
+
+      btnEvening.addEventListener('click', () => updateSlotStatus('evening', true));
+      undoEvening.addEventListener('click', () => updateSlotStatus('evening', false));
+
+      // Handle visibility change / day change check
+      let lastCheckedDate = getLocalDateKey();
+      function checkDayRollover() {
+        const currentDateKey = getLocalDateKey();
+        if (currentDateKey !== lastCheckedDate) {
+          lastCheckedDate = currentDateKey;
+          updateHeader();
+          renderToday();
+          renderHistory();
+        }
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          checkDayRollover();
+          updateHeader();
+        }
+      });
+
+      // Periodic minute update
+      setInterval(() => {
+        updateHeader();
+        checkDayRollover();
+      }, 1000 * 30);
+
+      // Initialization
+      updateHeader();
+      renderToday();
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>
