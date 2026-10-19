@@ -9,7 +9,7 @@
   <title>SmartMed — Täglicher Medikamenten-Tracker</title>
   <style>
     /* ----------------------------------------------------
-       Design System & CSS Reset (OLED / Slate Dark Mode)
+       Design System & Reset (OLED / Slate Dark Mode)
     ---------------------------------------------------- */
     :root {
       --bg-app: #090d16;
@@ -56,7 +56,7 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      padding: 24px 16px 40px;
+      padding: 20px 16px 40px;
       line-height: 1.45;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -68,28 +68,28 @@
       max-width: 440px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
     }
 
     /* ----------------------------------------------------
        Header
     ---------------------------------------------------- */
     header {
-      padding: 8px 4px 6px;
+      padding: 4px 4px 6px;
     }
 
     .brand-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .brand {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 1.15rem;
+      font-size: 1.18rem;
       font-weight: 700;
       letter-spacing: -0.02em;
       color: var(--text-primary);
@@ -101,12 +101,73 @@
       color: var(--brand-emerald);
     }
 
-    .live-time {
-      font-size: 0.85rem;
-      font-variant-numeric: tabular-nums;
-      color: var(--text-muted);
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Sync Badge */
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
       font-weight: 500;
-      letter-spacing: 0.04em;
+      padding: 4px 9px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .sync-badge.synced {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--brand-emerald-text);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .sync-badge.syncing {
+      background: rgba(59, 130, 246, 0.12);
+      color: #60a5fa;
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .sync-badge.error {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    .date-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
     }
 
     .date-display {
@@ -128,8 +189,17 @@
       font-weight: 400;
     }
 
+    .live-time {
+      font-size: 0.95rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-bottom: 3px;
+    }
+
     /* ----------------------------------------------------
-       Daily Tracker Cards
+       Tages-Karten
     ---------------------------------------------------- */
     .cards-container {
       display: flex;
@@ -274,7 +344,6 @@
       transform: scale(0.98);
     }
 
-    /* Completed Button State */
     .tracker-card.is-done .take-button {
       background: rgba(16, 185, 129, 0.16);
       border-color: var(--brand-emerald-border);
@@ -290,7 +359,7 @@
       justify-content: center;
     }
 
-    /* Undo link / button */
+    /* Undo link */
     .undo-btn {
       align-self: center;
       background: transparent;
@@ -321,10 +390,10 @@
     }
 
     /* ----------------------------------------------------
-       History Section (Historie der letzten Tage)
+       Historie (Letzte 4 Tage)
     ---------------------------------------------------- */
     .history-section {
-      margin-top: 10px;
+      margin-top: 4px;
       background: #0f1522;
       border: 1px solid var(--border-card);
       border-radius: var(--radius-xl);
@@ -412,13 +481,190 @@
     }
 
     /* ----------------------------------------------------
-       Footer / Note
+       Modal (Settings & Gist Sync)
     ---------------------------------------------------- */
-    footer {
-      text-align: center;
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: translateY(10px) scale(0.98);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-backdrop.open .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-head h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-intro {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .input-field {
+      width: 100%;
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .input-field:focus {
+      border-color: var(--brand-emerald);
+    }
+
+    .help-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 12px;
       font-size: 0.78rem;
       color: var(--text-muted);
-      padding-top: 4px;
+      line-height: 1.45;
+    }
+
+    .help-box ol {
+      margin-left: 16px;
+      margin-top: 6px;
+    }
+
+    .help-box a {
+      color: var(--brand-emerald-text);
+      text-decoration: underline;
+    }
+
+    .modal-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .primary-modal-btn {
+      background: var(--brand-emerald);
+      color: #062b1e;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 12px;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .primary-modal-btn:hover {
+      opacity: 0.92;
+    }
+
+    .secondary-modal-btn {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .secondary-modal-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .danger-link {
+      background: none;
+      border: none;
+      color: #f87171;
+      font-size: 0.78rem;
+      cursor: pointer;
+      text-align: center;
+      padding: 4px;
+      margin-top: 2px;
+    }
+
+    .danger-link:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      padding-top: 2px;
     }
   </style>
 </head>
@@ -430,31 +676,45 @@
     <header>
       <div class="brand-row">
         <div class="brand">
-          <!-- Minimalist Pill / Medical Cross SVG -->
           <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
             <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path>
             <path d="m8.5 8.5 7 7"></path>
           </svg>
           <span>SmartMed</span>
         </div>
-        <div class="live-time" id="liveClock">--:--</div>
+
+        <div class="header-actions">
+          <button class="sync-badge" id="syncStatusBadge" type="button" title="Synchronisationsstatus antippen für Einstellungen">
+            <span id="syncIcon">☁️</span>
+            <span id="syncText">Lokal</span>
+          </button>
+
+          <button class="icon-btn" id="openSettingsBtn" type="button" aria-label="Einstellungen & GitHub Sync öffnen">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <div class="date-display">
-        <div class="weekday" id="currentWeekday">Heute</div>
-        <div class="full-date" id="currentFullDate">Lade Datum...</div>
+      <div class="date-row">
+        <div class="date-display">
+          <div class="weekday" id="currentWeekday">Heute</div>
+          <div class="full-date" id="currentFullDate">Lade Datum...</div>
+        </div>
+        <div class="live-time" id="liveClock">--:--</div>
       </div>
     </header>
 
     <!-- Main Day Cards -->
     <main class="cards-container">
       
-      <!-- Morgens Card -->
+      <!-- Morgens -->
       <section class="tracker-card morning" id="cardMorning">
         <div class="card-top">
           <div class="time-slot">
             <div class="slot-icon-wrapper" aria-hidden="true">
-              <!-- Sun Icon -->
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="4"></circle>
                 <path d="M12 2v2"></path>
@@ -481,12 +741,7 @@
 
         <div class="action-row">
           <button class="take-button" id="btnMorning" type="button" aria-label="Morgendliche Medikamente als genommen markieren">
-            <span class="btn-icon" id="btnIconMorning">
-              <!-- Circle / Unchecked Icon -->
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="9"></circle>
-              </svg>
-            </span>
+            <span class="btn-icon" id="btnIconMorning"></span>
             <span class="btn-text" id="btnTextMorning">Als gegeben markieren</span>
           </button>
 
@@ -500,12 +755,11 @@
         </div>
       </section>
 
-      <!-- Abends Card -->
+      <!-- Abends -->
       <section class="tracker-card evening" id="cardEvening">
         <div class="card-top">
           <div class="time-slot">
             <div class="slot-icon-wrapper" aria-hidden="true">
-              <!-- Moon Icon -->
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
               </svg>
@@ -524,11 +778,7 @@
 
         <div class="action-row">
           <button class="take-button" id="btnEvening" type="button" aria-label="Abendliche Medikamente als genommen markieren">
-            <span class="btn-icon" id="btnIconEvening">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="9"></circle>
-              </svg>
-            </span>
+            <span class="btn-icon" id="btnIconEvening"></span>
             <span class="btn-text" id="btnTextEvening">Als gegeben markieren</span>
           </button>
 
@@ -544,7 +794,7 @@
 
     </main>
 
-    <!-- History Section (Letzte 4 Tage) -->
+    <!-- Historie (Letzte 4 Tage) -->
     <section class="history-section" aria-labelledby="historyHeading">
       <div class="history-header">
         <span class="history-title" id="historyHeading">
@@ -565,38 +815,95 @@
     </section>
 
     <footer>
-      SmartMed • Automatische Speicherung &amp; Tageswechsel
+      SmartMed • Verschlüsselte Synchronisation &amp; Auto-Reset
     </footer>
 
+  </div>
+
+  <!-- Modal: Einstellungen & GitHub Gist Sync -->
+  <div class="modal-backdrop" id="settingsModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>GitHub Sync (Gist)</h3>
+        <button class="close-btn" id="closeSettingsBtn" type="button" aria-label="Schließen">&times;</button>
+      </div>
+
+      <p class="modal-intro">
+        Synchronisiere deine Einnahmen sicher zwischen Handy und PC über ein <strong>geheimes GitHub Gist</strong>. Niemand außer dir hat Zugriff.
+      </p>
+
+      <div class="form-group">
+        <label for="ghTokenInput">GitHub Personal Access Token</label>
+        <input class="input-field" type="password" id="ghTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label for="gistIdInput">Secret Gist ID</label>
+        <input class="input-field" type="text" id="gistIdInput" placeholder="Wird automatisch erstellt oder eingefügt" autocomplete="off">
+      </div>
+
+      <div class="help-box">
+        <strong>So einfach geht's:</strong>
+        <ol>
+          <li>Gehe auf GitHub zu <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">Developer Settings &rarr; Tokens (classic)</a>.</li>
+          <li>Erstelle einen Token mit dem Haken bei <strong>gist</strong>.</li>
+          <li>Füge den Token oben ein und klicke auf <strong>„Neuen Gist automatisch anlegen“</strong>.</li>
+          <li>Auf dem 2. Gerät: Token &amp; die erstellte Gist-ID einfügen. Fertig!</li>
+        </ol>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="primary-modal-btn" id="btnAutoCreateGist" type="button">✨ Neuen Gist automatisch anlegen</button>
+        <button class="secondary-modal-btn" id="btnSaveManualSync" type="button">Speichern &amp; Verbinden</button>
+        <button class="danger-link" id="btnDisconnectSync" type="button">Sync trennen (Zurück zu Nur-Lokal)</button>
+      </div>
+    </div>
   </div>
 
   <script>
     (function() {
       'use strict';
 
-      const STORAGE_KEY = 'smartmed_records_v1';
+      // Storage Keys
+      const STORAGE_KEY_RECORDS = 'smartmed_records_v1';
+      const STORAGE_KEY_CONFIG = 'smartmed_sync_config_v1';
 
       // SVG Templates
       const SVG_CHECK = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>`;
       const SVG_CIRCLE = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle></svg>`;
 
-      // State Management
+      // ----------------------------------------------------
+      // Local Storage Helpers
+      // ----------------------------------------------------
       function loadAllRecords() {
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
+          const raw = localStorage.getItem(STORAGE_KEY_RECORDS);
           return raw ? JSON.parse(raw) : {};
         } catch (e) {
-          console.error('Fehler beim Laden aus localStorage:', e);
+          console.error('Fehler beim Laden der Records:', e);
           return {};
         }
       }
 
       function saveAllRecords(records) {
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+          localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
         } catch (e) {
-          console.error('Fehler beim Speichern in localStorage:', e);
+          console.error('Fehler beim Speichern der Records:', e);
         }
+      }
+
+      function loadSyncConfig() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_CONFIG);
+          return raw ? JSON.parse(raw) : { token: '', gistId: '' };
+        } catch (e) {
+          return { token: '', gistId: '' };
+        }
+      }
+
+      function saveSyncConfig(cfg) {
+        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(cfg));
       }
 
       function getLocalDateKey(dateObj) {
@@ -620,41 +927,16 @@
         return records[todayKey];
       }
 
-      function updateSlotStatus(slot, taken) {
-        const records = loadAllRecords();
-        const todayKey = getLocalDateKey();
-
-        if (!records[todayKey]) {
-          records[todayKey] = {
-            morning: { taken: false, time: null },
-            evening: { taken: false, time: null }
-          };
-        }
-
-        if (taken) {
-          const now = new Date();
-          const hours = String(now.getHours()).padStart(2, '0');
-          const mins = String(now.getMinutes()).padStart(2, '0');
-          records[todayKey][slot] = {
-            taken: true,
-            time: `${hours}:${mins}`
-          };
-        } else {
-          records[todayKey][slot] = {
-            taken: false,
-            time: null
-          };
-        }
-
-        saveAllRecords(records);
-        renderToday();
-        renderHistory();
-      }
-
+      // ----------------------------------------------------
       // DOM Elements
+      // ----------------------------------------------------
       const currentWeekdayEl = document.getElementById('currentWeekday');
       const currentFullDateEl = document.getElementById('currentFullDate');
       const liveClockEl = document.getElementById('liveClock');
+
+      const syncStatusBadge = document.getElementById('syncStatusBadge');
+      const syncIcon = document.getElementById('syncIcon');
+      const syncText = document.getElementById('syncText');
 
       const cardMorning = document.getElementById('cardMorning');
       const badgeTextMorning = document.getElementById('badgeTextMorning');
@@ -672,26 +954,46 @@
 
       const historyListEl = document.getElementById('historyList');
 
-      // Header updates (Date & Clock)
+      // Settings Modal DOM
+      const settingsModal = document.getElementById('settingsModal');
+      const openSettingsBtn = document.getElementById('openSettingsBtn');
+      const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+      const ghTokenInput = document.getElementById('ghTokenInput');
+      const gistIdInput = document.getElementById('gistIdInput');
+      const btnAutoCreateGist = document.getElementById('btnAutoCreateGist');
+      const btnSaveManualSync = document.getElementById('btnSaveManualSync');
+      const btnDisconnectSync = document.getElementById('btnDisconnectSync');
+
+      // ----------------------------------------------------
+      // UI Rendering
+      // ----------------------------------------------------
       function updateHeader() {
         const now = new Date();
-
-        // German Weekday
-        const weekdayOptions = { weekday: 'long' };
-        const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-
-        const weekdayStr = now.toLocaleDateString('de-DE', weekdayOptions);
-        const fullDateStr = now.toLocaleDateString('de-DE', dateOptions);
-
-        currentWeekdayEl.textContent = weekdayStr;
-        currentFullDateEl.textContent = fullDateStr;
-
+        currentWeekdayEl.textContent = now.toLocaleDateString('de-DE', { weekday: 'long' });
+        currentFullDateEl.textContent = now.toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+        
         const hours = String(now.getHours()).padStart(2, '0');
         const mins = String(now.getMinutes()).padStart(2, '0');
         liveClockEl.textContent = `${hours}:${mins}`;
       }
 
-      // Render Cards for Today
+      function setSyncUI(state, text) {
+        syncStatusBadge.className = 'sync-badge ' + state;
+        if (state === 'synced') {
+          syncIcon.textContent = '☁️';
+          syncText.textContent = text || 'Synchronisiert';
+        } else if (state === 'syncing') {
+          syncIcon.textContent = '🔄';
+          syncText.textContent = text || 'Sync...';
+        } else if (state === 'error') {
+          syncIcon.textContent = '⚠️';
+          syncText.textContent = text || 'Sync-Fehler';
+        } else {
+          syncIcon.textContent = '📱';
+          syncText.textContent = 'Nur Lokal';
+        }
+      }
+
       function renderSlot(slot, cardEl, badgeTextEl, btnEl, btnIconEl, btnTextEl, slotData) {
         if (slotData && slotData.taken) {
           cardEl.classList.add('is-done');
@@ -714,7 +1016,6 @@
         renderSlot('evening', cardEvening, badgeTextEvening, btnEvening, btnIconEvening, btnTextEvening, todayData.evening);
       }
 
-      // Render History (past 4 days)
       function renderHistory() {
         const records = loadAllRecords();
         historyListEl.innerHTML = '';
@@ -755,14 +1056,236 @@
         }
       }
 
-      // Event Listeners
+      // ----------------------------------------------------
+      // GitHub Secret Gist Sync Engine
+      // ----------------------------------------------------
+      async function pushToGist() {
+        const cfg = loadSyncConfig();
+        if (!cfg.token || !cfg.gistId) {
+          setSyncUI('local');
+          return;
+        }
+
+        setSyncUI('syncing', 'Speichere...');
+        try {
+          const localRecords = loadAllRecords();
+          const payload = {
+            version: 1,
+            lastModified: new Date().toISOString(),
+            records: localRecords
+          };
+
+          const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${cfg.token}`,
+              'Accept': 'application/vnd.github+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              files: {
+                'smartmed-data.json': {
+                  content: JSON.stringify(payload, null, 2)
+                }
+              }
+            })
+          });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          setSyncUI('synced', 'Synchronisiert');
+        } catch (err) {
+          console.error('Gist Push Fehler:', err);
+          setSyncUI('error', 'Sync-Fehler');
+        }
+      }
+
+      async function pullFromGist() {
+        const cfg = loadSyncConfig();
+        if (!cfg.token || !cfg.gistId) {
+          setSyncUI('local');
+          return;
+        }
+
+        setSyncUI('syncing', 'Lade...');
+        try {
+          const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+            headers: {
+              'Authorization': `Bearer ${cfg.token}`,
+              'Accept': 'application/vnd.github+json'
+            }
+          });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const gistData = await res.json();
+          const fileObj = gistData.files && gistData.files['smartmed-data.json'];
+          
+          if (fileObj && fileObj.content) {
+            const parsed = JSON.parse(fileObj.content);
+            if (parsed.records) {
+              // Intelligent Merge: merge records
+              const localRecords = loadAllRecords();
+              const merged = { ...localRecords, ...parsed.records };
+              saveAllRecords(merged);
+              renderToday();
+              renderHistory();
+            }
+          }
+          setSyncUI('synced', 'Synchronisiert');
+        } catch (err) {
+          console.error('Gist Pull Fehler:', err);
+          setSyncUI('error', 'Sync-Fehler');
+        }
+      }
+
+      function updateSlotStatus(slot, taken) {
+        const records = loadAllRecords();
+        const todayKey = getLocalDateKey();
+
+        if (!records[todayKey]) {
+          records[todayKey] = {
+            morning: { taken: false, time: null },
+            evening: { taken: false, time: null }
+          };
+        }
+
+        if (taken) {
+          const now = new Date();
+          const hours = String(now.getHours()).padStart(2, '0');
+          const mins = String(now.getMinutes()).padStart(2, '0');
+          records[todayKey][slot] = {
+            taken: true,
+            time: `${hours}:${mins}`
+          };
+        } else {
+          records[todayKey][slot] = {
+            taken: false,
+            time: null
+          };
+        }
+
+        saveAllRecords(records);
+        renderToday();
+        renderHistory();
+
+        // Background Sync to Gist
+        pushToGist();
+      }
+
+      // ----------------------------------------------------
+      // Settings Modal Logic
+      // ----------------------------------------------------
+      function openSettings() {
+        const cfg = loadSyncConfig();
+        ghTokenInput.value = cfg.token || '';
+        gistIdInput.value = cfg.gistId || '';
+        settingsModal.classList.add('open');
+        settingsModal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeSettings() {
+        settingsModal.classList.remove('open');
+        settingsModal.setAttribute('aria-hidden', 'true');
+      }
+
+      openSettingsBtn.addEventListener('click', openSettings);
+      syncStatusBadge.addEventListener('click', openSettings);
+      closeSettingsBtn.addEventListener('click', closeSettings);
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) closeSettings();
+      });
+
+      // Auto-Create Secret Gist
+      btnAutoCreateGist.addEventListener('click', async () => {
+        const token = ghTokenInput.value.trim();
+        if (!token) {
+          alert('Bitte gib zuerst oben deinen GitHub Token ein!');
+          ghTokenInput.focus();
+          return;
+        }
+
+        btnAutoCreateGist.disabled = true;
+        btnAutoCreateGist.textContent = '⏳ Erstelle geheimen Gist...';
+
+        try {
+          const localRecords = loadAllRecords();
+          const initialPayload = {
+            version: 1,
+            createdAt: new Date().toISOString(),
+            records: localRecords
+          };
+
+          const res = await fetch('https://api.github.com/gists', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              description: 'SmartMed — Private Medication Records',
+              public: false,
+              files: {
+                'smartmed-data.json': {
+                  content: JSON.stringify(initialPayload, null, 2)
+                }
+              }
+            })
+          });
+
+          if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(errBody.message || `HTTP ${res.status}`);
+          }
+
+          const createdGist = await res.json();
+          const newGistId = createdGist.id;
+          gistIdInput.value = newGistId;
+
+          saveSyncConfig({ token, gistId: newGistId });
+          setSyncUI('synced', 'Verbunden');
+          alert('🎉 Geheimer Gist wurde erfolgreich erstellt und verknüpft! Deine Daten sind ab jetzt synchronisiert.');
+          closeSettings();
+        } catch (err) {
+          alert('Fehler beim Erstellen des Gists: ' + err.message + '\n\nPrüfe, ob dein Token den Haken bei "gist" hat!');
+        } finally {
+          btnAutoCreateGist.disabled = false;
+          btnAutoCreateGist.textContent = '✨ Neuen Gist automatisch anlegen';
+        }
+      });
+
+      // Save Manual Config
+      btnSaveManualSync.addEventListener('click', () => {
+        const token = ghTokenInput.value.trim();
+        const gistId = gistIdInput.value.trim();
+        saveSyncConfig({ token, gistId });
+
+        if (token && gistId) {
+          pullFromGist();
+        } else {
+          setSyncUI('local');
+        }
+        closeSettings();
+      });
+
+      // Disconnect Sync
+      btnDisconnectSync.addEventListener('click', () => {
+        if (confirm('Möchtest du die GitHub-Synchronisation auf diesem Gerät trennen? (Deine lokalen Daten bleiben erhalten)')) {
+          saveSyncConfig({ token: '', gistId: '' });
+          ghTokenInput.value = '';
+          gistIdInput.value = '';
+          setSyncUI('local');
+          closeSettings();
+        }
+      });
+
+      // Event Listeners for actions
       btnMorning.addEventListener('click', () => updateSlotStatus('morning', true));
       undoMorning.addEventListener('click', () => updateSlotStatus('morning', false));
 
       btnEvening.addEventListener('click', () => updateSlotStatus('evening', true));
       undoEvening.addEventListener('click', () => updateSlotStatus('evening', false));
 
-      // Handle visibility change / day change check
+      // Day change detection
       let lastCheckedDate = getLocalDateKey();
       function checkDayRollover() {
         const currentDateKey = getLocalDateKey();
@@ -771,6 +1294,7 @@
           updateHeader();
           renderToday();
           renderHistory();
+          pullFromGist();
         }
       }
 
@@ -778,19 +1302,26 @@
         if (!document.hidden) {
           checkDayRollover();
           updateHeader();
+          pullFromGist(); // Auto-refresh when opening app or switching back
         }
       });
 
-      // Periodic minute update
       setInterval(() => {
         updateHeader();
         checkDayRollover();
-      }, 1000 * 30);
+      }, 30000);
 
-      // Initialization
+      // Startup
       updateHeader();
       renderToday();
       renderHistory();
+
+      const initialCfg = loadSyncConfig();
+      if (initialCfg.token && initialCfg.gistId) {
+        pullFromGist();
+      } else {
+        setSyncUI('local');
+      }
     })();
   </script>
 </body>
